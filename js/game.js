@@ -149,9 +149,9 @@
     L.time += dt;
 
     // 좌우
-    const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    const dir = 1; // 자동으로 앞으로 달림 (월드가 뒤로 갈수록 빨라짐)
     if (dir) p.facing = dir;
-    const target = dir * RUN;
+    const target = dir * RUN * L.w.speed;
     if (p.vx < target) p.vx = Math.min(target, p.vx + ACCEL * dt);
     else if (p.vx > target) p.vx = Math.max(target, p.vx - ACCEL * dt);
 
@@ -240,15 +240,13 @@
     // 대문
     if (L.gate) {
       const gx = L.gate.c * T;
-      if (gateLocked() && p.x + p.w > gx - 6 && p.x < gx + T) {
-        if (L.msgT <= 0) flash(`🚪 계약금이 부족해요 (${won(L.money)} / ${won(L.need)})`);
-      }
+      if (gateLocked() && p.x + p.w > gx - 6 && p.x < gx + T) return failGate();
       if (!gateLocked() && p.x > gx + 4) return clearWorld();
     }
 
     // 카메라
     const maxCam = L.cols * T - VIEW_W;
-    const want = p.x - VIEW_W * 0.38;
+    const want = p.x - VIEW_W * 0.28; // 앞이 더 많이 보이게
     L.camX = Math.max(0, Math.min(maxCam, want));
 
     L.popups.forEach((q) => { q.t -= dt; q.y -= 30 * dt; });
@@ -278,6 +276,15 @@
   function respawn() {
     const s = L.checkpoint || L.spawn;
     L.p.x = s.x; L.p.y = s.y; L.p.vx = 0; L.p.vy = 0;
+  }
+
+  function failGate() {
+    running = false;
+    updateHud();
+    showOverlay(`<div class="big">🚪 심사 탈락</div><p>계약금이 모자라요.</p>
+      <p><b>${won(L.money)}</b> / ${won(L.need)}</p><p class="small">뒤로 돌아갈 수 없으니 달리면서 동전을 놓치지 마세요!</p>
+      <button class="btn" id="go">다시 도전</button><button class="btn ghost" id="menu">처음 화면</button>`,
+      () => startWorld(L.wi), () => showTitle());
   }
 
   function gameOver() {
@@ -691,7 +698,7 @@
     showOverlay(`<div class="logo">👶🏠</div><div class="big">영끌런</div>
       <p>지방에서 강남까지, 계약금을 모아 달려라!</p>
       <div class="worlds">${list}</div>
-      <p class="small">◀ ▶로 움직이고, 점프는 한 번 누르면 중간·공중에서 한 번 더 누르면 높이! 고지서·사기꾼은 밟고, 금리 구름은 피하세요.</p>`);
+      <p class="small">캐릭터는 자동으로 달려요. 점프만 하세요! 한 번은 중간, 공중에서 한 번 더 누르면 높이. 계약금이 모자라면 대문에서 탈락해요.</p>`);
     document.querySelectorAll('.world').forEach((el) => {
       el.onclick = () => { hideOverlay(); startWorld(Number(el.dataset.w)); };
     });
@@ -725,18 +732,14 @@
     canvas.height = VIEW_H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    bindHold('#btn-left', 'left');
-    bindHold('#btn-right', 'right');
     bindHold('#btn-jump', 'jump');
+    canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); if (running) { input.jump = true; input.jumpHeld = true; } });
+    canvas.addEventListener('pointerup', () => { input.jumpHeld = false; });
     window.addEventListener('keydown', (e) => {
       if (e.repeat) return;
-      if (e.key === 'ArrowLeft' || e.key === 'a') input.left = true;
-      if (e.key === 'ArrowRight' || e.key === 'd') input.right = true;
       if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') { input.jump = true; input.jumpHeld = true; e.preventDefault(); }
     });
     window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft' || e.key === 'a') input.left = false;
-      if (e.key === 'ArrowRight' || e.key === 'd') input.right = false;
       if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') input.jumpHeld = false;
     });
     $('#btn-menu').onclick = () => showTitle();

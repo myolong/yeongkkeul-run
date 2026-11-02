@@ -57,6 +57,7 @@ body {
   background: #2e3747; color: var(--text); font-size: 28px;
   touch-action: none; box-shadow: 0 4px 0 #141a24;
 }
-.pad-btn.jump { width: 104px; height: 104px; background: #ef5350; font-size: 20px; font-weight: 800; box-shadow: 0 4px 0 #a52a28; }
-.pad-btn.down { transform: translateY(3px); box-shadow: 0 1px 0 #141a24; }
+.pad-btn.jump { width: 100%; height: 96px; border-radius: 22px; background: #ef5350; font-size: 24px; font-weight: 800; box-shadow: 0 5px 0 #a52a28; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pad-btn.jump small { font-size: 12px; font-weight: 400; opacity: .85; margin-top: 2px; }
+.pad-btn.down { transform: translateY(4px); box-shadow: 0 1px 0 #a52a28; }
 .foot { margin-top: 12px; font-size: 11px; color: #6c7889; text-align: center; }
