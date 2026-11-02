@@ -6,7 +6,8 @@
   const GRAVITY = 1900;
   const RUN = 190;
   const ACCEL = 1400;
-  const JUMP = 690;
+  const JUMP = 560;      // 첫 점프(중간 높이)
+  const JUMP2 = 620;     // 공중에서 한 번 더: 더블 점프(높게)
   const MAX_FALL = 900;
   const SAVE_KEY = 'yeongkkeul-run-v1';
 
@@ -70,10 +71,11 @@
       time: 0,
       spawn,
       checkpoint: null,
-      p: { x: spawn.x, y: spawn.y, w: 20, h: 28, vx: 0, vy: 0, onGround: false, coyote: 0, buffer: 0, facing: 1, inv: 0 },
+      p: { x: spawn.x, y: spawn.y, w: 20, h: 28, vx: 0, vy: 0, onGround: false, coyote: 0, buffer: 0, facing: 1, inv: 0, jumps: 0 },
       camX: 0,
       msg: '', msgT: 0,
       popups: [],
+      puffs: [],
       done: false,
     };
     showOverlay(`<div class="big">${w.name}</div><p>${w.sub}</p>
@@ -154,13 +156,20 @@
     else if (p.vx > target) p.vx = Math.max(target, p.vx - ACCEL * dt);
 
     // 점프 (땅에서 떨어진 직후·누르기 직전 여유 시간 포함)
+    // 점프: 한 번은 중간 높이, 공중에서 한 번 더 누르면 높게(더블 점프)
+    if (p.onGround) p.jumps = 0;
     p.coyote = p.onGround ? 0.09 : Math.max(0, p.coyote - dt);
     if (input.jump) { p.buffer = 0.12; input.jump = false; }
     else p.buffer = Math.max(0, p.buffer - dt);
-    if (p.buffer > 0 && p.coyote > 0) {
-      p.vy = -JUMP; p.buffer = 0; p.coyote = 0; p.onGround = false;
+    if (p.buffer > 0) {
+      if (p.coyote > 0 && p.jumps === 0) {
+        p.vy = -JUMP; p.jumps = 1;
+        p.buffer = 0; p.coyote = 0; p.onGround = false;
+      } else if (!p.onGround && p.jumps < 2) {
+        p.vy = -JUMP2; p.jumps = 2; p.buffer = 0;
+        L.puffs.push({ x: p.x + p.w / 2, y: p.y + p.h, t: 0.35 });
+      }
     }
-    if (!input.jumpHeld && p.vy < -260) p.vy = -260; // 짧게 누르면 낮게
 
     p.vy = Math.min(MAX_FALL, p.vy + GRAVITY * dt);
     moveX(p, p.vx * dt);
@@ -242,6 +251,8 @@
 
     L.popups.forEach((q) => { q.t -= dt; q.y -= 30 * dt; });
     L.popups = L.popups.filter((q) => q.t > 0);
+    L.puffs.forEach((q) => { q.t -= dt; });
+    L.puffs = L.puffs.filter((q) => q.t > 0);
     L.msgT = Math.max(0, L.msgT - dt);
     updateHud();
   }
@@ -512,6 +523,12 @@
     });
 
     // 플레이어 (이모지는 왼쪽을 보고 있어 오른쪽일 때 뒤집음)
+    // 더블 점프 때 발밑 연기
+    L.puffs.forEach((q) => {
+      const k = 1 - q.t / 0.35;
+      ctx.fillStyle = `rgba(255,255,255,${0.8 * (1 - k)})`;
+      ctx.beginPath(); ctx.ellipse(q.x - cam, q.y + 4, 8 + k * 16, 4 + k * 4, 0, 0, Math.PI * 2); ctx.fill();
+    });
     const p = L.p;
     groundShadow(p, cam);
     if (!(p.inv > 0 && Math.floor(p.inv * 12) % 2)) emoji('🏃', p.x - cam + p.w / 2, p.y + p.h / 2, 28, p.facing > 0);
@@ -660,7 +677,7 @@
     showOverlay(`<div class="logo">🏃🏠</div><div class="big">영끌런</div>
       <p>지방에서 강남까지, 계약금을 모아 달려라!</p>
       <div class="worlds">${list}</div>
-      <p class="small">◀ ▶로 움직이고 점프! 고지서·사기꾼은 밟고, 금리 구름은 피하세요.</p>`);
+      <p class="small">◀ ▶로 움직이고, 점프는 한 번 누르면 중간·공중에서 한 번 더 누르면 높이! 고지서·사기꾼은 밟고, 금리 구름은 피하세요.</p>`);
     document.querySelectorAll('.world').forEach((el) => {
       el.onclick = () => { hideOverlay(); startWorld(Number(el.dataset.w)); };
     });
