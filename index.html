@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>영끌런 - 지방에서 강남까지 달려라</title>
+  <meta name="description" content="계약금을 모으며 지방, 경기도, 서울, 강남까지 달리는 무료 횡스크롤 점프 웹게임.">
+  <meta name="theme-color" content="#ef5350">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <header class="hud">
+      <button id="btn-menu" class="icon-btn" aria-label="처음 화면">☰</button>
+      <span id="hud-world" class="world-badge">지방</span>
+      <span id="hud-hearts">❤️❤️❤️</span>
+      <span id="hud-time" class="time">0.0초</span>
+    </header>
+    <div class="money-row">💰 계약금 <b id="hud-money">0만원</b></div>
+
+    <div class="stage">
+      <canvas id="game"></canvas>
+      <div id="overlay" class="overlay hidden"></div>
+    </div>
+
+    <div class="pad">
+      <div class="dirs">
+        <button id="btn-left" class="pad-btn" aria-label="왼쪽">◀</button>
+        <button id="btn-right" class="pad-btn" aria-label="오른쪽">▶</button>
+      </div>
+      <button id="btn-jump" class="pad-btn jump" aria-label="점프">점프</button>
+    </div>
+
+    <footer class="foot">등장하는 캐릭터와 사건은 모두 가상입니다.</footer>
+  </main>
+
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
