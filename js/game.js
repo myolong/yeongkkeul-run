@@ -71,7 +71,7 @@
       time: 0,
       spawn,
       checkpoint: null,
-      p: { x: spawn.x, y: spawn.y, w: 20, h: 28, vx: 0, vy: 0, onGround: false, coyote: 0, buffer: 0, facing: 1, inv: 0, jumps: 0 },
+      p: { x: spawn.x, y: spawn.y, w: 20, h: 28, vx: 0, vy: 0, onGround: false, coyote: 0, buffer: 0, facing: 1, inv: 0, jumps: 0, runT: 0, spinT: 0 },
       camX: 0,
       msg: '', msgT: 0,
       popups: [],
@@ -166,7 +166,7 @@
         p.vy = -JUMP; p.jumps = 1;
         p.buffer = 0; p.coyote = 0; p.onGround = false;
       } else if (!p.onGround && p.jumps < 2) {
-        p.vy = -JUMP2; p.jumps = 2; p.buffer = 0;
+        p.vy = -JUMP2; p.jumps = 2; p.buffer = 0; p.spinT = 0.4;
         L.puffs.push({ x: p.x + p.w / 2, y: p.y + p.h, t: 0.35 });
       }
     }
@@ -176,6 +176,8 @@
     moveY(p, p.vy * dt);
     if (p.x < 0) p.x = 0;
     p.inv = Math.max(0, p.inv - dt);
+    p.runT = (p.runT + Math.abs(p.vx) * dt / 75) % 1; // 달린 거리만큼 다리 동작 진행
+    p.spinT = Math.max(0, p.spinT - dt);
 
     // 계약금·가시·중간 저장
     const c0 = Math.floor(p.x / T), c1 = Math.floor((p.x + p.w - 1) / T);
@@ -531,7 +533,19 @@
     });
     const p = L.p;
     groundShadow(p, cam);
-    if (!(p.inv > 0 && Math.floor(p.inv * 12) % 2)) emoji('🏃', p.x - cam + p.w / 2, p.y + p.h / 2, 28, p.facing > 0);
+    if (!(p.inv > 0 && Math.floor(p.inv * 12) % 2)) {
+      const moving = Math.abs(p.vx) > 20;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 2;
+      baby(ctx, p.x - cam + p.w / 2, p.y + p.h + 1, {
+        run: p.onGround && moving ? 1 : 0,
+        t: p.runT,
+        air: p.onGround ? 0 : (p.jumps === 2 ? 2 : 1),
+        flip: p.facing < 0,
+        spin: p.spinT > 0 ? (1 - p.spinT / 0.4) * Math.PI * 2 : 0,
+      }, 0.75);
+      ctx.restore();
+    }
 
     // 화면 가장자리를 살짝 어둡게
     const v = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.35, VIEW_W / 2, VIEW_H / 2, VIEW_W * 0.75);
@@ -674,7 +688,7 @@
         <span class="wt"><b>${w.name}</b><small>${open ? (b ? `최고 ${b.toFixed(1)}초` : w.sub) : '🔒 앞 월드를 깨면 열려요'}</small></span>
       </button>`;
     }).join('');
-    showOverlay(`<div class="logo">🏃🏠</div><div class="big">영끌런</div>
+    showOverlay(`<div class="logo">👶🏠</div><div class="big">영끌런</div>
       <p>지방에서 강남까지, 계약금을 모아 달려라!</p>
       <div class="worlds">${list}</div>
       <p class="small">◀ ▶로 움직이고, 점프는 한 번 누르면 중간·공중에서 한 번 더 누르면 높이! 고지서·사기꾼은 밟고, 금리 구름은 피하세요.</p>`);
